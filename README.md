@@ -17,3 +17,12 @@ brew reinstall sqlite --force --with-fts5
 ./bin/walmart reviews '28806789' 'bad'
 ./bin/walmart reviews '28806789' 'godd'
 ````
+
+Intentions:
+
+* add a full-text search for reviews (ElasticSearch/Sphinx?) (instead of current LIKE in SQLite)
+* use queue and workers for parallel crawling tasks (sneakers/Sidekiq + Rails ActiveJob?)
+* implement REST interface in front of the queue (Padrino/Rails --api/Hanami/etc.)
+* write tests for all the modules
+* refactor/review all the sneaked snippets from the old projects
+* etc.
