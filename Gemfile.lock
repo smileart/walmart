@@ -1,0 +1,125 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (5.0.2)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (~> 0.7)
+      minitest (~> 5.1)
+      tzinfo (~> 1.1)
+    addressable (2.5.0)
+      public_suffix (~> 2.0, >= 2.0.2)
+    ast (2.3.0)
+    awesome_print (1.7.0)
+    axiom-types (0.1.1)
+      descendants_tracker (~> 0.0.4)
+      ice_nine (~> 0.11.0)
+      thread_safe (~> 0.3, >= 0.3.1)
+    byebug (9.0.6)
+    codeclimate-engine-rb (0.4.0)
+      virtus (~> 1.0)
+    coderay (1.1.1)
+    coercible (1.0.0)
+      descendants_tracker (~> 0.0.1)
+    colorize (0.8.1)
+    concurrent-ruby (1.0.5)
+    cookiejar (0.3.3)
+    crass (1.0.2)
+    descendants_tracker (0.0.4)
+      thread_safe (~> 0.3, >= 0.3.1)
+    docopt (0.5.0)
+    em-http-request (1.1.5)
+      addressable (>= 2.3.4)
+      cookiejar (!= 0.3.1)
+      em-socksify (>= 0.3)
+      eventmachine (>= 1.0.3)
+      http_parser.rb (>= 0.6.0)
+    em-socksify (0.3.1)
+      eventmachine (>= 1.0.0.beta.4)
+    em-synchrony (1.0.6)
+      eventmachine (>= 1.0.0.beta.1)
+    equalizer (0.0.11)
+    eventmachine (1.2.3)
+    http_parser.rb (0.6.0)
+    i18n (0.8.1)
+    ice_nine (0.11.2)
+    inch (0.7.1)
+      pry
+      sparkr (>= 0.2.0)
+      term-ansicolor
+      yard (~> 0.8.7.5)
+    letters (0.4.1)
+      activesupport
+      awesome_print
+      colorize
+      xml-simple
+    method_source (0.8.2)
+    mini_portile2 (2.1.0)
+    minitest (5.10.1)
+    nokogiri (1.7.0.1)
+      mini_portile2 (~> 2.1.0)
+    nokogumbo (1.4.10)
+      nokogiri
+    oj (2.18.3)
+    parser (2.4.0.0)
+      ast (~> 2.2)
+    powerpack (0.1.1)
+    pry (0.10.4)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+    public_suffix (2.0.5)
+    rainbow (2.2.1)
+    reek (4.5.6)
+      codeclimate-engine-rb (~> 0.4.0)
+      parser (>= 2.3.1.2, < 2.5)
+      rainbow (~> 2.0)
+    rubocop (0.47.1)
+      parser (>= 2.3.3.1, < 3.0)
+      powerpack (~> 0.1)
+      rainbow (>= 1.99.1, < 3.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (~> 1.0, >= 1.0.1)
+    ruby-progressbar (1.8.1)
+    sanitize (4.4.0)
+      crass (~> 1.0.2)
+      nokogiri (>= 1.4.4)
+      nokogumbo (~> 1.4.1)
+    slop (3.6.0)
+    sparkr (0.4.1)
+    sqlite3 (1.3.13)
+    term-ansicolor (1.4.0)
+      tins (~> 1.0)
+    thread_safe (0.3.6)
+    tins (1.13.2)
+    tzinfo (1.2.2)
+      thread_safe (~> 0.1)
+    unicode-display_width (1.1.3)
+    virtus (1.0.5)
+      axiom-types (~> 0.1)
+      coercible (~> 1.0)
+      descendants_tracker (~> 0.0, >= 0.0.3)
+      equalizer (~> 0.0, >= 0.0.9)
+    xml-simple (1.1.5)
+    yard (0.8.7.6)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  activesupport
+  byebug
+  docopt
+  em-http-request
+  em-synchrony
+  eventmachine
+  inch
+  letters
+  nokogiri
+  oj
+  reek
+  rubocop
+  sanitize
+  sqlite3
+
+BUNDLED WITH
+   1.14.4

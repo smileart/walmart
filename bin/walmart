@@ -1,0 +1,182 @@
+#! /usr/bin/env ruby
+
+require 'docopt'
+require 'logger'
+require 'sqlite3'
+
+require_relative '../lib/stars'
+require_relative '../lib/walmart'
+require_relative '../lib/walmart_crawler'
+
+class WalmartCliDemo
+  # \x0 hack fixes Docopt first line indentation issue
+  DOCOPT = <<-"DOC".freeze
+    \x0
+    ======================================================
+              Wallmart Crawler CLI Interface
+                (for demo purposes only)
+    ======================================================
+
+    Usage:
+      #{Walmart::NAME} add <url>
+      #{Walmart::NAME} view <prod_id>
+      #{Walmart::NAME} reviews <prod_id> <keyword>
+      #{Walmart::NAME} --help
+      #{Walmart::NAME} --version
+
+    Options:
+      --version, -v  Show the current app version
+      --help, -h     Show this message
+  DOC
+
+  ERROR_MESSAGES = {
+    unknown_error: 'Unknown error!',
+    existing_product_error: 'Product already exists! PRODUCT ID: %s',
+    unexisting_product_error: 'Product with ID %s doesn\'t exists!',
+    product_not_found_error: 'Product with URL "%s" wasn\'t found!',
+    reviews_not_found_error: 'No reviews were found for product with ID: %s by keyword "%s"!'
+  }.freeze
+
+  DEFAULT_DB_PATH = './db/data.db'
+  DEFAULT_DB_SCHEMA_PATH = './db/schema.sql'
+
+  attr_reader :current_product_id
+
+  def initialize(logger_class, logger_device, logger_level)
+    @logger = logger_class.new(logger_device)
+    @logger.level = logger_level
+
+    init_database
+
+    @db = SQLite3::Database.new DEFAULT_DB_PATH
+  end
+
+  def run
+    @docopt = Docopt.docopt(DOCOPT)
+
+    return version if @docopt['--version']
+    return add if  @docopt["add"] && @docopt['<url>']
+    return view if @docopt["view"] && @docopt['<prod_id>']
+    return reviews if @docopt["reviews"] && @docopt['<prod_id>'] && @docopt['<keyword>']
+  end
+
+  def error(message)
+    puts "ERROR: #{message}".red
+  end
+
+  private
+
+  def init_database
+    return if File.exist?(DEFAULT_DB_PATH)
+    db = SQLite3::Database.new DEFAULT_DB_PATH
+    schema_sql = File.read(DEFAULT_DB_SCHEMA_PATH).split(';').reject {|query| query.strip.empty? }
+    schema_sql.each  {|query| db.execute query }
+  end
+
+  def version
+    puts "#{Walmart::NAME} v.#{Walmart::VERSION}"
+  end
+
+  def add
+    wmc = WalmartCrawler.new
+    product_url = @docopt['<url>']
+    current_product_id = wmc.parse_id(product_url)
+
+    product = @db.execute("SELECT * FROM products WHERE products.walmart_id = ?", current_product_id)
+
+    raise ProductExistsError, ERROR_MESSAGES[:existing_product_error] % current_product_id if !product.empty?
+
+    product = wmc.crawl(product_url)
+
+    raise ProductNotFoundError, ERROR_MESSAGES[:product_not_found_error] % product_url unless product
+
+    @db.execute("INSERT INTO products (name, price, walmart_id)
+                VALUES (?, ?, ?)", [product[:name], product[:price], product[:walmart_id]])
+
+    db_product_id = @db.last_insert_row_id
+
+    product[:reviews].each do |review|
+      verified = review[:badges] && review[:badges][0][:id] == 'VerifiedPurchaser' ? 1 : 0
+
+      @db.execute("INSERT INTO reviews (product_id, stars, title, author, verified, published_at, helpful_count, unhepful_count, text)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                  [
+                    db_product_id,
+                    review[:rating],
+                    review[:reviewTitle],
+                    review[:userNickname],
+                    verified,
+                    review[:reviewSubmissionTime],
+                    review[:positiveFeedback],
+                    review[:negativeFeedback],
+                    review[:reviewText]
+                  ])
+    end
+
+    puts "Product was added with id #{product[:walmart_id]}"
+  end
+
+  def view
+    current_product_id = @docopt['<prod_id>']
+    product = @db.execute("SELECT * FROM products WHERE products.walmart_id = ?", current_product_id)
+
+    raise ProductDoesntExistError, ERROR_MESSAGES[:unexisting_product_error] if product.empty?
+
+    print_product(product[0])
+  end
+
+  def reviews
+    # WARNING! The intention was to use FTS5 instead of stupid LIKE
+    # @TODO Rewrite this using SQLite 3 FTS5 search
+    current_product_id = @docopt['<prod_id>']
+    review_keyword = @docopt['<keyword>']
+    reviews = @db.execute('SELECT * FROM products AS p JOIN reviews AS r ON p.id = r.product_id
+                           WHERE p.walmart_id = ? AND r.text LIKE ?', [current_product_id, "%#{review_keyword}%"])
+
+    raise ReviewsNotFound, ERROR_MESSAGES[:reviews_not_found_error] % [current_product_id, review_keyword] if reviews.empty?
+
+    reviews.each do |review|
+      print_review(review)
+    end
+  end
+
+  def print_product(product)
+    return unless product
+
+    puts "="*50
+    puts "Name: #{product[0]}"
+    puts "Price: #{product[1]}"
+    puts "="*50
+  end
+
+  def print_review(review)
+    puts "="*100
+    puts "( #{review[10]} ) \"#{review[7]}\" by #{review[8]} #{Stars.generate(review[6])}"
+    puts "\t#{review[13]}"
+    puts "="*100
+  end
+end
+
+# User-level errors
+class ProductExistsError < StandardError; end
+class ProductDoesntExistError < StandardError; end
+class ProductNotFoundError < StandardError; end
+class ReviewsNotFound < StandardError; end
+
+trap(:INT) do
+  exit
+end
+
+LOGGER_LEVEL = Walmart::DEBUG ? Walmart::DEBUG : Logger::UNKNOWN
+
+begin
+  app = WalmartCliDemo.new(Logger, STDOUT, LOGGER_LEVEL)
+  app.run
+rescue ProductDoesntExistError, ProductExistsError, ProductNotFoundError, ReviewsNotFound => e
+  puts e.message
+rescue Docopt::Exit => e
+  puts e.message
+  puts
+ensure
+  # some finalisation
+end
